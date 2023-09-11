@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -36,12 +37,17 @@ public class MyWebSocketHandler extends AbstractWebSocketHandler {
         log.info("发送文本消息");
         // 获得客户端传来的消息
         String payload = message.getPayload();
-        String clientIp = session.getRemoteAddress().getAddress().getHostAddress();
+        ChatMessage getData=JSON.parseObject(payload,ChatMessage.class);
+        String username = getData.getSender();
+        if(StringUtils.isEmpty(username)) {
+            String clientIp = session.getRemoteAddress().getAddress().getHostAddress();
+            username = clientIp;
+        }
 
         log.info("server 接收到消息 " + payload);
 
-        ChatMessage getData=JSON.parseObject(payload,ChatMessage.class);
-        ChatMessage data = new ChatMessage("chat",getData.getContent(),clientIp,String.valueOf(System.currentTimeMillis()));;
+
+        ChatMessage data = new ChatMessage("chat",getData.getContent(),username,String.valueOf(System.currentTimeMillis()));;
         String text = JSON.toJSONString(data);
         wsService.broadcastMsg(text);
 
